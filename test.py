@@ -5,6 +5,8 @@
 #_____________________d/Function for WordPress Detection:
 #_____________________e/function for WordPress Version Detection 
 #_____________________f/check subdomain status (200ok or 401 forbiden)
+#_____________________g/plugin +version 
+#_____________________d/
 import requests
 from bs4 import BeautifulSoup
 import nmap
