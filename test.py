@@ -10,5 +10,16 @@
 import requests
 from bs4 import BeautifulSoup
 import nmap
-import sublist3r
-import python_nmap
+from if_wdpress import check_wordpress
+from version import get_wordpress_version
+from scrabe import scrape_website
+from ip import get_website_info
+
+if __name__ == "__main__":
+    target_url = input("Enter the target URL: ")
+    scrape_website(target_url)
+    ip_address, server = get_website_info(target_url)
+    if check_wordpress(target_url):
+        print("The website is built with WordPress.")
+    else:
+        print("The website is not built with WordPress.")

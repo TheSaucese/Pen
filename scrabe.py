@@ -24,7 +24,3 @@ def scrape_website(target_url):
 
     else:
         print(f"Failed to retrieve the target website. Status Code: {response.status_code}")
-
-if __name__ == "__main__":
-    target_url = input("Enter the target URL: ")
-    scrape_website(target_url)
