@@ -3,9 +3,9 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QPixmap, QTransform, QIcon
 from PySide6.QtWidgets import QApplication, QMainWindow, QTabWidget, QLabel, QTabBar, QWidget, QSizePolicy
 import qdarktheme
-from functions.attack import AttackWidget
-from functions.vuln import VulnWidget
-from functions.scan import ScanWidget
+from tabs.attack import AttackWidget
+from tabs.vuln import VulnWidget
+from tabs.scan import ScanWidget
 from qdarktheme.qtpy.QtCore import Qt
 from qdarktheme.qtpy.QtWidgets import QMainWindow
 
@@ -71,8 +71,6 @@ class Pen(QMainWindow):
                                       "}")
         self.tab_widget.setUsesScrollButtons(False)
 
-        # Connect the vulnerabilities_clicked signal from ScanWidget to handle_vulnerabilities_clicked
-        self.scanWidget.scan_results.vulnerabilities_clicked.connect(self.handle_vulnerabilities_clicked)
 
         # Show the tab widget here
         self.setCentralWidget(self.tab_widget)
