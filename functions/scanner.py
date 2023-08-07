@@ -1,5 +1,3 @@
-# scanner.py
-
 from collections import deque
 from urllib.robotparser import RobotFileParser
 import requests

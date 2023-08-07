@@ -1,17 +1,30 @@
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QProgressBar, QTextBrowser, QGroupBox
-from PySide6.QtCore import Signal,QThread,QObject,QUrl
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QProgressBar, QTextBrowser, QGroupBox,QHBoxLayout,QSizePolicy
+from PySide6.QtCore import Signal,QThread,QObject,QUrl,QSize,Qt
 from PySide6.QtGui import QTextCursor,QDesktopServices
 from functions.ScanOptionsDialog import ScanOptionsDialog
+from functions.ScanSaveOption import ScanSaveOptionsDialog
 from functions.scanner import crawl_website, open_ports,is_wordpress,scrape_urls
 
-
 class ClickableTextBrowser(QTextBrowser):
+    saveRequested = Signal()
+
     def __init__(self):
         super().__init__()
+        self.save_scan_button = QPushButton("Save", self)
+        self.save_scan_button.setFixedSize(QSize(45,40))
 
     def anchorClicked(self, url):
         # Open the clicked URL in the default web browser
         QDesktopServices.openUrl(QUrl(url))
+
+    def resizeEvent(self, event):
+        self.save_scan_button.move(self.width() - self.save_scan_button.width(), 1)
+        super().resizeEvent(event)
+
+    def emit_save_signal(self):
+        self.saveRequested.emit()  # Emit a custom signal when the button is clicked
+
+    
 
 
 class ScanWorker(QObject):
@@ -57,19 +70,17 @@ class ScanWorker(QObject):
         for scan_result_part in scan_results_parts:
             self.scan_results.emit(scan_result_part)
 
-class ScanWidget(QMainWindow):
+class ScanWidget(QWidget):
 
     def __init__(self):
         super().__init__()
 
         self.options= ScanOptionsDialog(self).get_selected_options()
 
-        # Create the central widget
-        central_widget = QWidget(self)
-        self.setCentralWidget(central_widget)
+    
 
         # Create the main layout
-        main_layout = QVBoxLayout(central_widget)
+        main_layout = QVBoxLayout(self)
 
         # URL Input
         url_label = QLabel("Target URL:")
@@ -98,6 +109,9 @@ class ScanWidget(QMainWindow):
         scan_results_group_box.setLayout(scan_results_layout)
         main_layout.addWidget(scan_results_group_box)
 
+        self.scan_results.saveRequested.connect(self.save_scan_results)
+    
+
         # Scan History
         scan_history_group_box = QGroupBox("Scan History")
         scan_history_layout = QVBoxLayout()
@@ -125,6 +139,7 @@ class ScanWidget(QMainWindow):
         self.scan_worker.scan_results.connect(self.update_scan_results)
         self.scan_worker.scan_progress.connect(self.update_scan_progress)
         self.scan_options_button.clicked.connect(self.open_scan_options)
+        #self.save_scan_button.clicked.connect(self.save_scan_results)
 
 
         # Start the thread
@@ -167,5 +182,17 @@ class ScanWidget(QMainWindow):
         self.scan_thread.wait()
         super().closeEvent(event)
 
-    
-    
+    def save_scan_results(self):
+        scan_results = self.scan_results.toPlainText()
+
+        options_dialog = ScanSaveOptionsDialog(self)
+        if options_dialog.exec_():
+            selected_file_path = options_dialog.get_selected_file_path()
+
+            if selected_file_path:
+                try:
+                    with open(selected_file_path, "w") as file:
+                        file.write(scan_results)
+                    print("Scan results saved successfully.")
+                except Exception as e:
+                    print("Error saving scan results:", e)
