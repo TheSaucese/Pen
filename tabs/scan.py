@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QProgressBar, QTextBrowser, QGroupBox
 from PySide6.QtCore import Signal,QThread,QObject,QUrl
 from PySide6.QtGui import QTextCursor,QDesktopServices
-from functions.scanner import open_ports,is_wordpress,scrape_urls
+from functions.scanner import crawl_website, open_ports,is_wordpress,scrape_urls
 
 
 class ClickableTextBrowser(QTextBrowser):
@@ -24,11 +24,14 @@ class ScanWorker(QObject):
         # Simulate scanning process for demonstration purposes
         open_ports_result, num = open_ports(target_url)
         is_wordpress_result = is_wordpress(target_url)
+        crawled_urls = crawl_website(target_url, 20) # 20 max pages
         urls = scrape_urls(target_url)
         url_result = ""
         if urls:
             url_result += f"Scraped URLs:\n"
             for url in urls:
+                url_result += f"{url}\n"
+            for url in crawled_urls:
                 url_result += f"{url}\n"
         else:
             url_result += "No URLs found or unable to retrieve information.\n"
