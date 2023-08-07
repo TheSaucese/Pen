@@ -12,6 +12,7 @@ class ClickableTextBrowser(QTextBrowser):
         super().__init__()
         self.save_scan_button = QPushButton("Save", self)
         self.save_scan_button.setFixedSize(QSize(45,40))
+        self.save_scan_button.clicked.connect(self.emit_save_signal)
 
     def anchorClicked(self, url):
         # Open the clicked URL in the default web browser
