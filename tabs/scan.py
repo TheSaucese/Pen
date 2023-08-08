@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QProgressBar, QTextBrowser, QGroupBox,QHBoxLayout,QSizePolicy,QTableWidgetItem,QTableWidget,QHeaderView
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QProgressBar, QTextBrowser, QGroupBox,QHBoxLayout,QSizePolicy,QTableWidgetItem,QTableWidget,QHeaderView,QAbstractItemView
 from PySide6.QtCore import Signal,QThread,QObject,QUrl,QSize,Qt
 from PySide6.QtGui import QTextCursor,QDesktopServices
 from functions.ScanOptionsDialog import ScanOptionsDialog
@@ -26,6 +26,13 @@ class ClickableTextBrowser(QTextBrowser):
 
     def emit_save_signal(self):
         self.saveRequested.emit()  # Emit a custom signal when the button is clicked
+
+    def enable_save_button(self):
+        self.save_scan_button.setEnabled(True)  # Enable the button
+
+    def disable_save_button(self):
+        self.save_scan_button.setEnabled(False)  # Disable the button
+    
 
     
 
@@ -128,6 +135,7 @@ class ScanWidget(QWidget):
         self.scan_results_table = QTableWidget()
         self.scan_results_table.setColumnCount(1)  # One column for scan results
         self.scan_results_table.setHorizontalHeaderLabels(["Saved Scans"])
+        self.scan_results_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         header = self.scan_results_table.horizontalHeader()       
         header.setSectionResizeMode(0, QHeaderView.Stretch)
 
@@ -155,6 +163,7 @@ class ScanWidget(QWidget):
         self.scan_options_button.clicked.connect(self.open_scan_options)
         #self.save_scan_button.clicked.connect(self.save_scan_results)
 
+        self.scan_results.disable_save_button()
 
         # Start the thread
         self.scan_thread.start()
@@ -167,11 +176,7 @@ class ScanWidget(QWidget):
     def load_saved_scan_results(self):
         saved_scan_results = []
         for file_name in os.listdir(self.DEFAULT_SAVE_DIR):
-            file_path = os.path.join(self.DEFAULT_SAVE_DIR, file_name)
-            if os.path.isfile(file_path):
-                with open(file_path, "r") as file:
-                    scan_results = file.read()
-                    saved_scan_results.append(scan_results)
+            saved_scan_results.append(file_name)
         return saved_scan_results
     
     def open_scan_options(self):
@@ -185,6 +190,7 @@ class ScanWidget(QWidget):
         target_url = self.url_input.text()
         self.scan_results.clear()
         self.scan_worker.start_scan(target_url,self.options)
+        self.scan_results.enable_save_button()
 
     def update_scan_results(self, scan_result_part):
         # Append the received scan result part to the existing content of scan_results
@@ -208,6 +214,17 @@ class ScanWidget(QWidget):
         self.scan_thread.wait()
         super().closeEvent(event)
 
+    def get_file_date(self,file_name):
+        # Extract the date and time portion from the filename
+        date_str = file_name.split('_')[1]  # Splitting by '_' and getting the second part
+        time_str = file_name.split('_')[2]  # Splitting by '_' and getting the third part
+
+        # Combine the date and time strings to create a datetime object
+        datetime_str = f"{date_str}_{time_str}"
+        file_datetime = datetime.strptime(datetime_str, "%Y-%m-%d_%H-%M-%S")
+
+        return file_datetime.date()
+
     def save_scan_results(self):
         scan_results = self.scan_results.toPlainText()
 
@@ -222,26 +239,24 @@ class ScanWidget(QWidget):
             print(f"Scan results saved in {file_path}")
 
             # Add the saved scan results to the history
-            self.saved_scan_results.append(scan_results)
+            self.saved_scan_results.append(file_name)
 
             # Update the scan history widget
             self.update_scan_history()
         except Exception as e:
             print("Error saving scan results:", e)
 
+        self.scan_results.disable_save_button()
+        
+
     def update_scan_history(self):
         self.scan_results_table.setRowCount(0)  # Clear the existing rows
 
-        for idx, saved_scan in enumerate(self.saved_scan_results, start=1):
-            date, scan_result = saved_scan
+        for _,scan_date in enumerate(self.saved_scan_results, start=1):
             self.scan_results_table.insertRow(0)  # Insert a new row at the top
 
-            date_item = QTableWidgetItem(date)
+            date_item = QTableWidgetItem(scan_date)
             self.scan_results_table.setItem(0, 0, date_item)
-
-        # Resize rows and columns to fit content
-        self.scan_results_table.resizeRowsToContents()
-        self.scan_results_table.resizeColumnsToContents()
 
     def display_scan_result(self, item):
         row = item.row()
