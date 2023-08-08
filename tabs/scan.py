@@ -1,9 +1,11 @@
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QProgressBar, QTextBrowser, QGroupBox,QHBoxLayout,QSizePolicy
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QProgressBar, QTextBrowser, QGroupBox,QHBoxLayout,QSizePolicy,QTableWidgetItem,QTableWidget,QHeaderView
 from PySide6.QtCore import Signal,QThread,QObject,QUrl,QSize,Qt
 from PySide6.QtGui import QTextCursor,QDesktopServices
 from functions.ScanOptionsDialog import ScanOptionsDialog
 from functions.ScanSaveOption import ScanSaveOptionsDialog
 from functions.scanner import crawl_website, open_ports,is_wordpress,scrape_urls
+from datetime import datetime
+import os
 
 class ClickableTextBrowser(QTextBrowser):
     saveRequested = Signal()
@@ -73,13 +75,20 @@ class ScanWorker(QObject):
 
 class ScanWidget(QWidget):
 
+    DEFAULT_SAVE_DIR = "saves"  # Default directory for saving scan results
+
     def __init__(self):
         super().__init__()
+        # Create the default save directory if it doesn't exist
+        if not os.path.exists(self.DEFAULT_SAVE_DIR):
+            os.makedirs(self.DEFAULT_SAVE_DIR)
+
+        # Populate saved_scan_results with files from the saves directory
+        self.saved_scan_results = self.load_saved_scan_results()
 
         self.options= ScanOptionsDialog(self).get_selected_options()
 
-    
-
+        
         # Create the main layout
         main_layout = QVBoxLayout(self)
 
@@ -116,9 +125,13 @@ class ScanWidget(QWidget):
         # Scan History
         scan_history_group_box = QGroupBox("Scan History")
         scan_history_layout = QVBoxLayout()
-        self.scan_history = QTextBrowser()
-        self.scan_history.setReadOnly(True)
-        scan_history_layout.addWidget(self.scan_history)
+        self.scan_results_table = QTableWidget()
+        self.scan_results_table.setColumnCount(1)  # One column for scan results
+        self.scan_results_table.setHorizontalHeaderLabels(["Saved Scans"])
+        header = self.scan_results_table.horizontalHeader()       
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+
+        scan_history_layout.addWidget(self.scan_results_table)
         scan_history_group_box.setLayout(scan_history_layout)
         main_layout.addWidget(scan_history_group_box)
 
@@ -149,6 +162,18 @@ class ScanWidget(QWidget):
         # Connect the Start Scan button to a function to start the scan process
         self.start_scan_button.clicked.connect(self.start_scan)
 
+        self.update_scan_history()
+
+    def load_saved_scan_results(self):
+        saved_scan_results = []
+        for file_name in os.listdir(self.DEFAULT_SAVE_DIR):
+            file_path = os.path.join(self.DEFAULT_SAVE_DIR, file_name)
+            if os.path.isfile(file_path):
+                with open(file_path, "r") as file:
+                    scan_results = file.read()
+                    saved_scan_results.append(scan_results)
+        return saved_scan_results
+    
     def open_scan_options(self):
         options_dialog = ScanOptionsDialog(self)
         if options_dialog.exec_():
@@ -186,14 +211,41 @@ class ScanWidget(QWidget):
     def save_scan_results(self):
         scan_results = self.scan_results.toPlainText()
 
-        options_dialog = ScanSaveOptionsDialog(self)
-        if options_dialog.exec_():
-            selected_file_path = options_dialog.get_selected_file_path()
+        # Construct the file path for saving the scan results
+        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        file_name = f"scan_{current_time}.txt"
+        file_path = os.path.join(self.DEFAULT_SAVE_DIR, file_name)
 
-            if selected_file_path:
-                try:
-                    with open(selected_file_path, "w") as file:
-                        file.write(scan_results)
-                    print("Scan results saved successfully.")
-                except Exception as e:
-                    print("Error saving scan results:", e)
+        try:
+            with open(file_path, "w") as file:
+                file.write(scan_results)
+            print(f"Scan results saved in {file_path}")
+
+            # Add the saved scan results to the history
+            self.saved_scan_results.append(scan_results)
+
+            # Update the scan history widget
+            self.update_scan_history()
+        except Exception as e:
+            print("Error saving scan results:", e)
+
+    def update_scan_history(self):
+        self.scan_results_table.setRowCount(0)  # Clear the existing rows
+
+        for idx, saved_scan in enumerate(self.saved_scan_results, start=1):
+            date, scan_result = saved_scan
+            self.scan_results_table.insertRow(0)  # Insert a new row at the top
+
+            date_item = QTableWidgetItem(date)
+            self.scan_results_table.setItem(0, 0, date_item)
+
+        # Resize rows and columns to fit content
+        self.scan_results_table.resizeRowsToContents()
+        self.scan_results_table.resizeColumnsToContents()
+
+    def display_scan_result(self, item):
+        row = item.row()
+        if 0 <= row < len(self.saved_scan_results):
+            scan_result = self.saved_scan_results[row]
+            self.scan_results.setPlainText(scan_result)
+            # Additional logic if needed, such as scrolling to the top

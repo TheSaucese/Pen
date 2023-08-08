@@ -1,0 +1,37 @@
+Open Ports and Services for http://www.ngbsgroup.com:
+Port: 80, Service: http
+Port: 443, Service: https
+Port: 8080, Service: http-proxy
+Port: 8443, Service: https-alt
+
+
+The website is built with WordPress.
+
+Scraped URLs:
+https://www.ngbsgroup.com
+https://www.ngbsgroup.com/
+https://www.ngbsgroup.com/fr/services/
+https://www.ngbsgroup.com/fr/nous-rejoindre/
+https://www.ngbsgroup.com/fr/contact/
+https://www.linkedin.com/jobs/search/?currentJobId=3579480405&f_C=77707646&geoId=92000000&originToLandingJobPostings=3579480405%2C3583070429%2C3597133475
+https://www.ngbsgroup.com/pages/contact
+https://www.ngbsgroup.com/pages/contact
+https://www.ngbsgroup.com/pages/nous-rejoindre/
+tel:+212 8 08 55 01 82
+tel:+212 63 22 56 86
+mailto:contact@ngbsgroup.com
+http://www.ngbsgroup.com
+https://www.ngbsgroup.com
+https://www.ngbsgroup.com/
+https://www.ngbsgroup.com/fr/services/
+https://www.ngbsgroup.com/fr/nous-rejoindre/
+https://www.ngbsgroup.com/fr/contact/
+https://www.linkedin.com/jobs/search/?currentJobId=3579480405&f_C=77707646&geoId=92000000&originToLandingJobPostings=3579480405%2C3583070429%2C3597133475
+https://www.ngbsgroup.com/pages/contact
+https://www.ngbsgroup.com/pages/nous-rejoindre/
+https://www.ngbsgroup.com/wp-content/uploads/2023/04/Ingenierie-et-RD-.jpg
+
+
+Scanning complete! Found 4 open ports.
+
+Click for more details
