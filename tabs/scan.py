@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QProgressBar, QTextBrowser, QGroupBox,QHBoxLayout,QSizePolicy,QTableWidgetItem,QTableWidget,QHeaderView,QAbstractItemView
 from PySide6.QtCore import Signal,QThread,QObject,QUrl,QSize,Qt
 from PySide6.QtGui import QTextCursor,QDesktopServices
+from functions.ContentPopUp import ContentPopup
 from functions.ScanOptionsDialog import ScanOptionsDialog
 from functions.ScanSaveOption import ScanSaveOptionsDialog
 from functions.scanner import crawl_website, open_ports,is_wordpress,scrape_urls
@@ -73,7 +74,6 @@ class ScanWorker(QObject):
             f"{is_wordpress_result}\n",
             f"{url_result}\n",
             f"Scanning complete! Found {num} open ports.\n",
-            "Click for more details"
         ]
 
         # Send the scan results part by part
@@ -136,6 +136,7 @@ class ScanWidget(QWidget):
         self.scan_results_table.setColumnCount(1)  # One column for scan results
         self.scan_results_table.setHorizontalHeaderLabels(["Saved Scans"])
         self.scan_results_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.scan_results_table.cellDoubleClicked.connect(self.handle_cell_double_clicked)
         header = self.scan_results_table.horizontalHeader()       
         header.setSectionResizeMode(0, QHeaderView.Stretch)
 
@@ -264,3 +265,17 @@ class ScanWidget(QWidget):
             scan_result = self.saved_scan_results[row]
             self.scan_results.setPlainText(scan_result)
             # Additional logic if needed, such as scrolling to the top
+
+    def handle_cell_double_clicked(self, row, col):
+        file_name_item = self.scan_results_table.item(row, col)
+        if file_name_item is not None:
+            file_name = file_name_item.text()
+            try:
+                with open("saves/"+file_name, "r") as file:
+                    file_content = file.read()
+                    popup = ContentPopup(file_content, parent=self)
+                    popup.exec_()
+            except FileNotFoundError:
+                print("File not found.")
+        else:
+            print("No item at the clicked cell.")

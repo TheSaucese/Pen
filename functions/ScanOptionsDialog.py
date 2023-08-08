@@ -1,9 +1,12 @@
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QCheckBox, QDialogButtonBox
+from PySide6.QtCore import Qt
 
 class ScanOptionsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Scan Options")
+        self.setFixedSize(200, 150)
+       
 
         layout = QVBoxLayout(self)
         self.checkboxes = []
