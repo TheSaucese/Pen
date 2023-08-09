@@ -4,7 +4,7 @@ from PySide6.QtGui import QTextCursor,QDesktopServices
 from functions.ContentPopUp import ContentPopup
 from functions.ScanOptionsDialog import ScanOptionsDialog
 from functions.ScanSaveOption import ScanSaveOptionsDialog
-from functions.scanner import crawl_website, open_ports,is_wordpress,scrape_urls
+from functions.scanner import WappAlyze, crawl_website, open_ports,is_wordpress,scrape_urls
 from datetime import datetime
 import os
 
@@ -51,10 +51,14 @@ class ScanWorker(QObject):
         num=""
         is_wordpress_result=""
         url_result=""
+        wap=WappAlyze(target_url)
+        wap_result=""
         if "Open Ports Scan" in selected_options:
             open_ports_result, num = open_ports(target_url)
+            
         if "WordPress Detection" in selected_options:
             is_wordpress_result = is_wordpress(target_url)
+            
         if "URL Scraping" in selected_options:
             urls = scrape_urls(target_url)
             curls = crawl_website(target_url)
@@ -68,11 +72,16 @@ class ScanWorker(QObject):
             else:
                 url_result += "No URLs found or unable to retrieve information.\n"
 
+            for w in wap:
+                wap_result+=f"{w}\n"
+            
+
         # Prepare the scan results step by step
         scan_results_parts = [
             f"{open_ports_result}\n",
             f"{is_wordpress_result}\n",
             f"{url_result}\n",
+            f"{wap_result}\n",
             f"Scanning complete! Found {num} open ports.\n",
         ]
 
@@ -204,10 +213,11 @@ class ScanWidget(QWidget):
         text_cursor = self.scan_results.textCursor()
         text_cursor.movePosition(QTextCursor.End)
         self.scan_results.setTextCursor(text_cursor)
+        self.scan_progress.setValue(100)
 
     def update_scan_progress(self, progress_value):
         # Update the scan_progress bar with the received value
-        self.scan_progress.setValue(progress_value)
+        self.scan_progress.setValue(progress_value+self.scan_progress.value)
     
     def closeEvent(self, event):
         # Clean up the thread and worker when the GUI is closed

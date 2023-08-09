@@ -5,6 +5,12 @@ from bs4 import BeautifulSoup
 from get_ports import get_open_ports
 from if_wdpress import check_wordpress
 from urllib.parse import urljoin
+from Wappalyzer import Wappalyzer, WebPage
+
+def WappAlyze(target_url):
+    wappalyzer = Wappalyzer.latest()
+    webpage = WebPage.new_from_url(target_url)
+    return wappalyzer.analyze(webpage)
 
 def is_wordpress(target_url):
     if check_wordpress(target_url):
