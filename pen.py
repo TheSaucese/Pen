@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QTabWidget, QLabel, QTa
 import qdarktheme
 from tabs.attack import AttackWidget
 from tabs.vuln import VulnWidget
-from tabs.scan import ScanWidget
+from tabs.infogather import ScanWidget
 from qdarktheme.qtpy.QtCore import Qt
 from qdarktheme.qtpy.QtWidgets import QMainWindow
 
