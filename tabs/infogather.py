@@ -7,6 +7,8 @@ from functions.ScanSaveOption import ScanSaveOptionsDialog
 from functions.scanner import WappAlyze, crawl_website, open_ports, is_wordpress, scrape_urls
 from functions.xsstrike import run_xsstrike
 from functions.dirbuster import run_feroxbuster
+from functions.xsstracer import run_xsstracer
+from functions.nmap import run_nmap
 from datetime import datetime
 import os
 
@@ -56,50 +58,58 @@ class ScanWorker(QObject):
         super().__init__()
 
     def start_scan(self, target_url, selected_options):
-        # Simulate scanning process for demonstration purposes
-        open_ports_result = ""
-        num = ""
-        is_wordpress_result = ""
-        url_result = ""
-        wap = WappAlyze(target_url)
-        wap_result = ""
-        xsstrike_result = run_xsstrike(target_url)
-        dirbuster_result = run_feroxbuster(target_url)
-        if "Open Ports Scan" in selected_options:
-            open_ports_result, num = open_ports(target_url)
+        try:
+            if "Open Ports Scan" in selected_options:
+                open_ports_result, num = open_ports(target_url)
+                self.scan_results.emit(f"Open Ports Scan\n{open_ports_result}\n")
+                self.scan_progress.emit(15)  # Example progress value
 
-        if "WordPress Detection" in selected_options:
-            is_wordpress_result = is_wordpress(target_url)
+            if "WordPress Detection" in selected_options:
+                is_wordpress_result = is_wordpress(target_url)
+                self.scan_results.emit(f"WordPress Detection\n{is_wordpress_result}\n")
+                self.scan_progress.emit(30)  # Example progress value
 
-        if "URL Scraping" in selected_options:
-            urls = scrape_urls(target_url)
-            curls = crawl_website(target_url)
-            url_result = ""
-            if urls:
-                url_result += f"Scraped URLs:\n"
-                for url in urls:
-                    url_result += f"{url}\n"
-                for url in curls:
-                    url_result += f"{url}\n"
-            else:
-                url_result += "No URLs found or unable to retrieve information.\n"
+            if "URL Scraping" in selected_options:
+                urls = scrape_urls(target_url)
+                curls = crawl_website(target_url)
+                url_result = ""
+                if urls:
+                    url_result += "Scraped URLs:\n"
+                    for url in urls:
+                        url_result += f"{url}\n"
+                    for url in curls:
+                        url_result += f"{url}\n"
+                else:
+                    url_result += "No URLs found or unable to retrieve information.\n"
+                self.scan_results.emit(f"URL Scraping\n{url_result}\n")
+                self.scan_progress.emit(45)  # Example progress value
 
+            wap = WappAlyze(target_url)
+            wap_result = ""
             for w in wap:
                 wap_result += f"{w}\n"
+            self.scan_results.emit(f"WappAlyze\n{wap_result}\n")
+            self.scan_progress.emit(60)  # Example progress value
 
-        # Prepare the scan results step by step
-        scan_results_parts = [
-            ("Open Ports Scan", open_ports_result),
-            ("WordPress Detection", is_wordpress_result),
-            ("URL Scraping", url_result),
-            ("WappAlyze", wap_result),
-            ("XSStrike", xsstrike_result),
-            ("DirBuster", dirbuster_result)
-        ]
+            xsstrike_result = run_xsstrike(target_url)
+            self.scan_results.emit(f"XSStrike\n{xsstrike_result}\n")
+            self.scan_progress.emit(75)  # Example progress value
 
-        # Send the scan results part by part
-        for title, content in scan_results_parts:
-            self.scan_results.emit(f"{title}\n{content}\n")
+            xsstracer_result = run_xsstracer(target_url)
+            self.scan_results.emit(f"XSSTracer\n{xsstracer_result}\n")
+            self.scan_progress.emit(90)  # Example progress value
+
+            nmap_result = run_nmap(target_url)
+            self.scan_results.emit(f"Nmap\n{nmap_result}\n")
+            self.scan_progress.emit(95)  # Example progress value
+
+            dirbuster_result = run_feroxbuster(target_url)
+            self.scan_results.emit(f"DirBuster\n{dirbuster_result}\n")
+            self.scan_progress.emit(100)  # Example progress value
+
+        except Exception as e:
+            self.scan_results.emit(f"Error\n{str(e)}\n")
+            self.scan_progress.emit(100)
 
 class ScanWidget(QWidget):
 
@@ -199,12 +209,13 @@ class ScanWidget(QWidget):
 
     def start_scan(self):
         target_url = self.url_input.text()
+        self.scan_progress.setValue(0)  # Reset progress bar
         for widget in self.scan_results_widgets:
             widget.hide()
         self.scan_worker.start_scan(target_url, self.options)
 
     def update_scan_results(self, scan_result_part):
-        for i, widget in enumerate(self.scan_results_widgets):
+        for widget in self.scan_results_widgets:
             if not widget.isVisible():
                 title, content = scan_result_part.split('\n', 1)
                 widget.title_label.setText(title)
@@ -213,8 +224,7 @@ class ScanWidget(QWidget):
                 break
 
     def update_scan_progress(self, progress_value):
-        # Update the scan_progress bar with the received value
-        self.scan_progress.setValue(progress_value + self.scan_progress.value)
+        self.scan_progress.setValue(progress_value)  # Set progress bar to received value
 
     def closeEvent(self, event):
         # Clean up the thread and worker when the GUI is closed

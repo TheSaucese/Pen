@@ -6,7 +6,7 @@ def clean_output(output):
     clean_output = re.sub(r'\x1b\[[0-9;]*m', '', output)
     return clean_output
 
-def run_xsstrike(url, crawl=False):
+def run_xsstrike(url, crawl=True):
     # Construct the command
     command = ["./functions/xsstrike/xsstrike.py", "-u", url]
     if crawl:
